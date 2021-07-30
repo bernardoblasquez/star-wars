@@ -7,30 +7,62 @@ import "./App.css";
 
 function App() {
   
-	const [movies, setMovies] = useState([])
-	const [isLoading, setIsLoading] = useState(false)
+	const [movies, setMovies] = useState([]);
+	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState(null)
 
 	async function fetchMoviesHandler() {
 		setIsLoading(true);
+		setError(null)
 
-		const response = await fetch("https://swapi.dev/api/films/");
-		const data = await response.json();
-	
-		const transformedMovieData =  data.results.map( movieData => {
-				return {
-					id: movieData.episode_id,
-					title: movieData.title,
-					openingText: movieData.opening_crawl,
-					releaseDate: movieData.release_data
-				};
+		try{
+			const response = await fetch("https://swapi.dev/api/films/");
+			
+			if (!response.ok){
+				throw new Error('Something went wrong here!!') // jumps to catch if finds a error
 			}
-		)
+			
+			const data = await response.json();
 
-		setMovies(transformedMovieData);
-		setIsLoading(false);
+			
+		
+			const transformedMovieData =  data.results.map( movieData => {
+					return {
+						id: movieData.episode_id,
+						title: movieData.title,
+						openingText: movieData.opening_crawl,
+						releaseDate: movieData.release_data
+					};
+				}
+			)
+			setMovies(transformedMovieData);
+			setIsLoading(false);
+		}
+		catch (error) {
+			setError(error.message)
+			setIsLoading(false)
+		}
+		
 
 	}
 	
+	const contentStateHandler = () => {
+		let content = <p>Found no movies</p>;
+
+		if (isLoading) {
+			return <p>LOADING...</p>
+		}
+
+		if (error) {
+			return <p>{error}</p>
+		}
+
+		if (movies.length > 0){
+			return <MoviesList movies={movies} />
+		}
+
+		return content
+	}
 	
 
 	return (
@@ -39,9 +71,7 @@ function App() {
 			<button onClick={fetchMoviesHandler}>Fetch Movies</button>
 		</section>
 		<section>
-			{ !isLoading && movies.length > 0 &&  <MoviesList movies={movies} />} 			
-			{ !isLoading && movies.length === 0 &&  <p>No movies found</p> } 			
-			{ isLoading && <p>LOADING...</p> } 			
+			{ contentStateHandler() } 	
 		</section>
 		</React.Fragment>
 	);
